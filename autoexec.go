@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -66,6 +67,7 @@ func startExec(signal chan struct{}, cmd string, args []string) {
 		}
 
 		fmt.Println("Running:", cmd, args)
+		io.WriteString(os.Stdout, "\033]0;Autoexec - building\007")
 
 		ex := exec.Command(cmd, args...)
 		ex.Stdout = os.Stdout
@@ -79,6 +81,9 @@ func startExec(signal chan struct{}, cmd string, args []string) {
 		err = ex.Wait()
 		if err != nil {
 			fmt.Println(err)
+			io.WriteString(os.Stdout, "\033]0;Autoexec - ERROR\007")
+		} else {
+			io.WriteString(os.Stdout, "\033]0;Autoexec - OK\007")
 		}
 
 		fmt.Println()
@@ -86,6 +91,8 @@ func startExec(signal chan struct{}, cmd string, args []string) {
 }
 
 func main() {
+	io.WriteString(os.Stdout, "\033]0;Autoexec\007")
+
 	if help || cmd == "" || suffix == "" {
 		flag.PrintDefaults()
 		return
