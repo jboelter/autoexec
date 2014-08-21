@@ -67,7 +67,11 @@ func startExec(signal chan struct{}, cmd string, args []string) {
 		}
 
 		fmt.Println("Running:", cmd, args)
+<<<<<<< HEAD
 		io.WriteString(os.Stdout, "\033]0;Autoexec - running\007")
+=======
+		io.WriteString(os.Stdout, "\033]0;Autoexec - building\007")
+>>>>>>> 6c04c63e51834534177bdc8cda16c0ade8d2cdc3
 
 		ex := exec.Command(cmd, args...)
 		ex.Stdout = os.Stdout
