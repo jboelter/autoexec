@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -9,7 +10,7 @@ import (
 	"time"
 
 	flag "github.com/dotcloud/docker/pkg/mflag"
-	"github.com/howeyc/fsnotify"
+	"gopkg.in/fsnotify.v1"
 )
 
 var (
@@ -66,6 +67,7 @@ func startExec(signal chan struct{}, cmd string, args []string) {
 		}
 
 		fmt.Println("Running:", cmd, args)
+		io.WriteString(os.Stdout, "\033]0;Autoexec - running\007")
 
 		ex := exec.Command(cmd, args...)
 		ex.Stdout = os.Stdout
@@ -79,6 +81,9 @@ func startExec(signal chan struct{}, cmd string, args []string) {
 		err = ex.Wait()
 		if err != nil {
 			fmt.Println(err)
+			io.WriteString(os.Stdout, "\033]0;Autoexec - ERROR\007")
+		} else {
+			io.WriteString(os.Stdout, "\033]0;Autoexec - OK\007")
 		}
 
 		fmt.Println()
@@ -86,6 +91,8 @@ func startExec(signal chan struct{}, cmd string, args []string) {
 }
 
 func main() {
+	io.WriteString(os.Stdout, "\033]0;Autoexec\007")
+
 	if help || cmd == "" || suffix == "" {
 		flag.PrintDefaults()
 		return
@@ -124,7 +131,7 @@ func main() {
 			if verbose {
 				fmt.Println("Adding", path)
 			}
-			watcher.Watch(path)
+			watcher.Add(path)
 			return nil
 		}
 
@@ -142,7 +149,7 @@ func main() {
 
 	for {
 		select {
-		case ev := <-watcher.Event:
+		case ev := <-watcher.Events:
 			if strings.HasSuffix(ev.Name, suffix) {
 				if verbose {
 					fmt.Printf("[%d] %v\n", time.Now().UnixNano(), ev.Name)
@@ -150,7 +157,7 @@ func main() {
 				signal <- struct{}{}
 			}
 
-		case err := <-watcher.Error:
+		case err := <-watcher.Errors:
 			fmt.Println(err)
 		}
 	}
