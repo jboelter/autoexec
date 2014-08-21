@@ -31,4 +31,4 @@ Inspired by github.com/ryanslade/goautotest
 
 ### Limitations
 
-There are OS-specific limits as to how many watches can be created.  See the package "github.com/howeyc/fsnotify"
+There are OS-specific limits as to how many watches can be created.  See the package "gopkg.in/fsnotify.v1"
