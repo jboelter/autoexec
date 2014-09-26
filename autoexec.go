@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -9,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	flag "github.com/dotcloud/docker/pkg/mflag"
-	"gopkg.in/fsnotify.v1"
+	"github.com/jboelter/notificator"
+	fsnotify "gopkg.in/fsnotify.v1"
 )
 
 var (
@@ -20,17 +21,19 @@ var (
 	verbose bool
 	args    []string
 	help    bool
+
+	notifier *notificator.Notificator
 )
 
 func init() {
-	flag.BoolVar(&help, []string{"h", "#help", "-help"}, false, "display the help")
+	flag.BoolVar(&help, "h", false, "display the help")
 
-	flag.BoolVar(&verbose, []string{"v", "#verbose", "-verbose"}, false, "verbose output")
+	flag.BoolVar(&verbose, "v", false, "verbose output")
 
-	flag.StringVar(&path, []string{"p", "#path", "-path"}, "", "the path to monitor")
-	flag.StringVar(&suffix, []string{"s", "#suffix", "-suffix"}, "", "the file suffix to monitor")
+	flag.StringVar(&path, "p", "", "the path to monitor")
+	flag.StringVar(&suffix, "s", "", "the file suffix to monitor")
 
-	flag.StringVar(&cmd, []string{"c", "#cmd", "-cmd"}, "", "the exec to run")
+	flag.StringVar(&cmd, "c", "", "the exec to run")
 
 	flag.Parse()
 }
@@ -83,6 +86,11 @@ func startExec(signal chan struct{}, cmd string, args []string) {
 		if err != nil {
 			fmt.Println(err)
 			io.WriteString(os.Stdout, "\033]0;Autoexec - ERROR\007")
+			text := cmd
+			for _, v := range args {
+				text += " " + v
+			}
+			notifier.Push("Autoexec - ERROR", text)
 		} else {
 			io.WriteString(os.Stdout, "\033]0;Autoexec - OK\007")
 		}
@@ -92,6 +100,7 @@ func startExec(signal chan struct{}, cmd string, args []string) {
 }
 
 func main() {
+	fmt.Println("Autoexec v1.1")
 	io.WriteString(os.Stdout, "\033]0;Autoexec\007")
 
 	if help || cmd == "" || suffix == "" {
@@ -100,6 +109,10 @@ func main() {
 	}
 	fmt.Println(flag.Args())
 	args = flag.Args()
+
+	notifier = notificator.New(notificator.Options{
+		AppName: "Autoexec",
+	})
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -129,10 +142,20 @@ func main() {
 		}
 
 		if info.IsDir() && !strings.HasPrefix(path, ".") {
-			if verbose {
-				fmt.Println("Adding", path)
+			matches, err := filepath.Glob(path + "/*" + suffix)
+			if err != nil {
+				panic(err)
 			}
-			watcher.Add(path)
+			if len(matches) > 0 {
+				if verbose {
+					fmt.Println("Adding  ", path)
+				}
+				watcher.Add(path)
+			} else {
+				if verbose {
+					fmt.Println("Skipping", path)
+				}
+			}
 			return nil
 		}
 
