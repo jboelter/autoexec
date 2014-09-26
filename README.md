@@ -1,10 +1,12 @@
 Simple tool to automatically run anything when a watched file changes.
 
+Now includes desktop notifications (tested on Ubuntu) for failures.
+
 Originally written for auto-executing Go builds and tests
 
 ### INSTALL
 
-	go get github.com/joshuaboelter/autoexec
+	go get github.com/jboelter/autoexec
 
 ### TO RUN
 
@@ -20,11 +22,11 @@ Originally written for auto-executing Go builds and tests
 **Usage**
 
 	autoexec
-		-c, --cmd="": the exec to run
-		-h, --help=false: display the help
-		-p, --path="": the path to monitor
-		-s, --suffix="": the file suffix to monitor
-		-v, --verbose=false: verbose output
+	  -c="": the exec to run
+	  -h=false: display the help
+	  -p="": the path to monitor
+	  -s="": the file suffix to monitor
+	  -v=false: verbose output
 
 
 Inspired by github.com/ryanslade/goautotest
